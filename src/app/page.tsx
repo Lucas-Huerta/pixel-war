@@ -1,95 +1,101 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
 
-export default function Home() {
+import { useRef, useState } from "react";
+import { IRefPhaserGame, PhaserGame } from "@/shared/game/PhaserGame";
+import { MainMenu } from "@/shared/game/scenes/MainMenu";
+
+function App() {
+  // The sprite can only be moved in the MainMenu Scene
+  const [canMoveSprite, setCanMoveSprite] = useState(true);
+
+  //  References to the PhaserGame component (game and scene are exposed)
+  const phaserRef = useRef<IRefPhaserGame | null>(null);
+  const [spritePosition, setSpritePosition] = useState({ x: 0, y: 0 });
+
+  const changeScene = () => {
+    if (phaserRef.current) {
+      const scene = phaserRef.current.scene as MainMenu;
+
+      if (scene) {
+        scene.changeScene();
+      }
+    }
+  };
+
+  const moveSprite = () => {
+    if (phaserRef.current) {
+      const scene = phaserRef.current.scene as MainMenu;
+
+      if (scene && scene.scene.key === "MainMenu") {
+        // Get the update logo position
+        scene.moveLogo(({ x, y }) => {
+          setSpritePosition({ x, y });
+        });
+      }
+    }
+  };
+
+  const addSprite = () => {
+    if (phaserRef.current) {
+      const scene = phaserRef.current.scene;
+
+      if (scene) {
+        // Add more stars
+        const x = Phaser.Math.Between(64, scene.scale.width - 64);
+        const y = Phaser.Math.Between(64, scene.scale.height - 64);
+
+        //  `add.sprite` is a Phaser GameObjectFactory method and it returns a Sprite Game Object instance
+        const star = scene.add.sprite(x, y, "star");
+
+        //  ... which you can then act upon. Here we create a Phaser Tween to fade the star sprite in and out.
+        //  You could, of course, do this from within the Phaser Scene code, but this is just an example
+        //  showing that Phaser objects and systems can be acted upon from outside of Phaser itself.
+        scene.add.tween({
+          targets: star,
+          duration: 500 + Math.random() * 1000,
+          alpha: 0,
+          yoyo: true,
+          repeat: -1,
+        });
+      }
+    }
+  };
+
+  // Event emitted from the PhaserGame component
+  const currentScene = (scene: Phaser.Scene) => {
+    setCanMoveSprite(scene.scene.key !== "MainMenu");
+  };
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>src/app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
+    <div id="app">
+      <PhaserGame ref={phaserRef} currentActiveScene={currentScene} />
+      <div>
+        <div>
+          <button className="button" onClick={changeScene}>
+            Change Scene
+          </button>
         </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <div>
+          <button
+            disabled={canMoveSprite}
+            className="button"
+            onClick={moveSprite}
+          >
+            Toggle Movement
+          </button>
+        </div>
+        <div className="spritePosition">
+          Sprite Position:
+          <pre>{`{\n  x: ${spritePosition.x}\n  y: ${spritePosition.y}\n}`}</pre>
+        </div>
+        <div>
+          <button className="button" onClick={addSprite}>
+            Add New Sprite
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
+
+export default App;
