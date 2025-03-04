@@ -1,10 +1,19 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { IRefPhaserGame, PhaserGame } from "@/shared/game/PhaserGame";
+import { IRefPhaserGame } from "@/shared/game/PhaserGame";
 import { MainMenu } from "@/shared/game/scenes/MainMenu";
+import dynamic from "next/dynamic";
 
-function App() {
+// Import with no SSR
+const PhaserGame = dynamic(
+  () => import("@/shared/game/PhaserGame").then((mod) => mod.PhaserGame),
+  {
+    ssr: false,
+  },
+);
+
+export default function Home() {
   // The sprite can only be moved in the MainMenu Scene
   const [canMoveSprite, setCanMoveSprite] = useState(true);
 
@@ -97,5 +106,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
