@@ -1,7 +1,3 @@
-"use client";
-
 import { io } from "socket.io-client";
 
-export const socket = io(
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080",
-);
+export const socket = io(import.meta.env.VITE_API_URL);

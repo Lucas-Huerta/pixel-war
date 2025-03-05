@@ -1,11 +1,9 @@
-"use client";
-
 import { useState } from "react";
 import { socket } from "@/shared/api/socket";
 // import { usePixelWar } from "@/shared/api/usePixelWar";
 import { roomService } from "@/shared/api/roomService";
 
-export default function Home() {
+export default function Room() {
   const [isSocketConnected, setIsSocketConnected] = useState(socket.connected);
   const [transport, setTransport] = useState("N/A");
 

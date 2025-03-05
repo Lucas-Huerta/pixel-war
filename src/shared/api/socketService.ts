@@ -1,5 +1,6 @@
 import { socket } from "./socket";
 import { Grid, PixelUpdate } from "@/shared/types/pixel";
+import { Room } from "../types/room";
 
 export const socketService = {
   onConnect(callback: () => void) {
@@ -29,5 +30,25 @@ export const socketService = {
 
   connect() {
     socket.connect();
+  },
+
+  onRoomUpdate(callback: (room: Room) => void) {
+    socket.on("room:update", callback);
+  },
+
+  onGameStart(callback: () => void) {
+    socket.on("game:start", callback);
+  },
+
+  onPlayerJoin(callback: (roomId: string) => void) {
+    socket.on("player:join", callback);
+  },
+
+  joinRoom(roomId: string) {
+    socket.emit("room:join", roomId);
+  },
+
+  leaveRoom(roomId: string) {
+    socket.emit("room:leave", roomId);
   },
 };

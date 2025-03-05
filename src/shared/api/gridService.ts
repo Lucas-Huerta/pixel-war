@@ -1,6 +1,6 @@
 import { Grid, ServerStatus } from "@/shared/types/pixel";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export const gridService = {
   async getCurrentGrid(): Promise<Grid> {
