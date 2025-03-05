@@ -1,0 +1,216 @@
+@import url("https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&display=swap");
+
+* {
+    margin: 0;
+    padding: 0;
+    font-family: "Pixelify Sans", sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    color: rgba(255, 255, 255, 0.87);
+    background-color: #000000;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#app {
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.spritePosition {
+    margin: 10px 0 0 10px;
+    font-size: 0.8em;
+}
+
+.button {
+    color: #403662;
+    background-color: #b5a0f8;
+    padding: 15px 40px 15px 40px;
+    margin: 10px;
+    font-size: 14px;
+    font-family: "Press Start 2P", system-ui;
+    border: 0;
+    box-shadow: 0px 5px #403662, 0px -5px #403662, 5px 0px #403662,
+        -5px 0px #403662, 0px 10px #00000038, 5px 5px #00000038,
+        -5px 5px #00000038, inset 0px 5px #ffffff36;
+    cursor: pointer;
+    font-family: "Pixelify Sans", sans-serif;
+    font-weight: 600;
+}
+
+.button:hover {
+    transform: translateY(5px);
+    box-shadow: 0px 5px #403662, 0px -5px #403662, 5px 0px #403662,
+        -5px 0px #403662, 0px 10px #00000038, 5px 5px #00000038,
+        -5px 5px #00000038, inset 0px 5px #ffffff36;
+}
+
+.button:active {
+    transform: translateY(5px);
+    box-shadow: 0px 5px #403662, 0px -5px #403662, 5px 0px #403662,
+        -5px 0px #403662, inset 0px 5px #00000038;
+}
+
+.button.red {
+    background-color: #f8a0a0;
+    box-shadow: 0px 5px #662020, 0px -5px #662020, 5px 0px #662020,
+        -5px 0px #662020, 0px 10px #00000038, 5px 5px #00000038,
+        -5px 5px #00000038, inset 0px 5px #ffffff36;
+}
+
+.button.blue {
+    background-color: #a0b8f8;
+    box-shadow: 0px 5px #204066, 0px -5px #204066, 5px 0px #204066,
+        -5px 0px #204066, 0px 10px #00000038, 5px 5px #00000038,
+        -5px 5px #00000038, inset 0px 5px #ffffff36;
+}
+
+.button.grey {
+    background-color: #b5b5b5;
+    box-shadow: 0px 5px #616161, 0px -5px #616161, 5px 0px #616161,
+        -5px 0px #616161, 0px 10px #00000038, 5px 5px #00000038,
+        -5px 5px #00000038, inset 0px 5px #ffffff36;
+}
+
+.button.disabled {
+    background-color: #616161;
+    box-shadow: 0px 5px #616161, 0px -5px #616161, 5px 0px #616161,
+        -5px 0px #616161, 0px 10px #00000038, 5px 5px #00000038,
+        -5px 5px #00000038, inset 0px 5px #ffffff36;
+    cursor: not-allowed;
+    color: black;
+}
+
+.button.disabled:hover {
+    transform: none;
+    box-shadow: 0px 5px #616161, 0px -5px #616161, 5px 0px #616161,
+        -5px 0px #616161, 0px 10px #00000038, 5px 5px #00000038,
+        -5px 5px #00000038, inset 0px 5px #ffffff36;
+}
+
+#menu-wrapper {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background-color: #1c1524;
+}
+
+h1 {
+    position: absolute;
+    top: 2rem;
+    margin: 0;
+    font-size: 3rem;
+}
+
+.input {
+    color: #403662;
+    background-color: white;
+    padding: 15px 40px 15px 40px;
+    margin: 10px;
+    font-size: 14px;
+    font-family: "Press Start 2P", system-ui;
+    border: 0;
+    box-shadow: 0px 5px #616161, 0px -5px #616161, 5px 0px #616161,
+        -5px 0px #616161, 0px 10px #00000038, 5px 5px #00000038,
+        -5px 5px #00000038, inset 0px 5px #ffffff36;
+    cursor: pointer;
+    text-align: center;
+    font-family: "Pixelify Sans", sans-serif;
+}
+
+.character-select {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    background: transparent;
+    border: none;
+    filter: saturate(0);
+    cursor: pointer;
+}
+
+.character-select-wrapper {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.character-select:hover {
+    filter: saturate(1);
+}
+
+.character-select.is-selected {
+    filter: saturate(1);
+}
+
+.flex-center {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.team-select-wrapper {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.mb-0-5 {
+    margin-bottom: 0.5rem;
+}
+
+.mb-1 {
+    margin-bottom: 1rem;
+}
+
+.mb-1-5 {
+    margin-bottom: 1.5rem;
+}
+
+.mb-2 {
+    margin-bottom: 2rem;
+}
+
+.team-players {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.text-red {
+    color: #ff7171;
+}
+
+.text-blue {
+    color: #7285fb;
+}
+
+.game-infos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}
+
+.player-name {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
