@@ -89,6 +89,7 @@ export const socketService = {
     position: { x: number; y: number },
     playerId: string,
   ) {
+    console.log("Emitting player position:", { roomId, position, playerId });
     socket.emit("player:move", { roomId, position, playerId });
   },
 
@@ -98,10 +99,38 @@ export const socketService = {
       position: { x: number; y: number };
     }) => void,
   ) {
-    socket.on("player:moved", callback);
+    socket.on("player:moved", (data) => {
+      console.log("Received player move:", data);
+      if (typeof data.position === "number") {
+        data.position = { x: data.position, y: data.position };
+      }
+      callback(data);
+    });
   },
 
   onPlayersUpdate(callback: (players: any[]) => void) {
     socket.on("players:update", callback);
+  },
+
+  updateTile(
+    roomId: string,
+    tileData: { x: number; y: number; color: number; playerId: string },
+  ) {
+    console.log("Emitting tile update:", { roomId, ...tileData });
+    socket.emit("tile:update", { roomId, ...tileData });
+  },
+
+  onTileUpdate(
+    callback: (data: {
+      x: number;
+      y: number;
+      color: number;
+      playerId: string;
+    }) => void,
+  ) {
+    socket.on("tile:updated", (data) => {
+      console.log("Received tile update:", data);
+      callback(data);
+    });
   },
 };

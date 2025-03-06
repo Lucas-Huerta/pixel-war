@@ -3,7 +3,14 @@ import { socketService } from "../shared/api/socketService";
 import { Room } from "../shared/types/room";
 import { socket } from "../shared/api/socket";
 import { roomService } from "../shared/api/roomService";
-import { Player } from "../shared/types/player";
+
+interface Player {
+  id: string;
+  name: string;
+  position: { x: number; y: number };
+  character: number;
+  teamId?: string;
+}
 
 interface SocketContextType {
   currentRoom: Room | null;
@@ -72,25 +79,67 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     socket.on("gameStarted", (roomId) => {
       console.log("Game started in room:", roomId);
       setIsGameStarted(true);
-      setCurrentRoom((prev) =>
-        prev ? { ...prev, isGameStarted: true } : null,
-      );
+
+      // Initialiser les joueurs avec leurs couleurs d'équipe
+      const initialPlayers = roomUsers.map((user, index) => ({
+        id: user.id || user,
+        name: user.name || user,
+        position: { x: 400, y: 300 }, // Position initiale
+        character: user.character || 0,
+        color: index % 2 === 0 ? 0xff0000 : 0x0000ff, // Alterner entre rouge et bleu
+      }));
+
+      console.log("Initial players:", initialPlayers);
+      setPlayers(initialPlayers);
+
+      // Informer les autres joueurs de notre position
+      if (currentRoom?.id && socket.id) {
+        socket.emit("player:move", {
+          roomId: currentRoom.id,
+          position: { x: 400, y: 300 },
+          playerId: socket.id,
+        });
+      }
     });
 
     socketService.onPlayerMove((data) => {
       console.log("Player moved:", data);
-      setPlayers((prevPlayers) =>
-        prevPlayers.map((player) =>
+      if (!data.position || !data.playerId) return;
+
+      setPlayers((prevPlayers) => {
+        const playerExists = prevPlayers.some((p) => p.id === data.playerId);
+        if (!playerExists) {
+          return [
+            ...prevPlayers,
+            {
+              id: data.playerId,
+              name: data.playerId,
+              position: data.position,
+              character: 0,
+            },
+          ];
+        }
+        return prevPlayers.map((player) =>
           player.id === data.playerId
             ? { ...player, position: data.position }
             : player,
-        ),
-      );
+        );
+      });
     });
 
     socketService.onPlayersUpdate((updatedPlayers) => {
       console.log("All players update:", updatedPlayers);
       setPlayers(updatedPlayers);
+    });
+
+    // Ajouter l'écoute des mises à jour des tuiles
+    socketService.onTileUpdate((data) => {
+      console.log("Tile updated:", data);
+      // On peut éventuellement stocker l'état de la grille ici si nécessaire
+    });
+
+    socketService.onTileUpdate((data) => {
+      console.log("Tile update received in context:", data);
     });
 
     return () => {
@@ -102,11 +151,14 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
       socket.off("gameStarted");
       socket.off("player:moved");
       socket.off("players:update");
+      socket.off("tile:updated");
     };
-  }, []);
+  }, [roomUsers, currentRoom]);
 
   const joinRoom = async (roomId: string, username: string) => {
-    socket.data = { username };
+    socket.data = {
+      username,
+    };
     socket.emit("joinRoom", roomId);
     socket.emit("getRoomUsers", roomId);
 
@@ -125,6 +177,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const joinTeam = (roomId: string, teamName: string) => {
+    // Stocker l'équipe dans le socket
+    // const teamNumber = parseInt(teamName.replace("team", ""));
+    // socket.data.team = teamNumber;
     socket.emit("joinTeam", roomId, teamName);
   };
 
@@ -133,17 +188,18 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const updatePlayerPosition = (position: { x: number; y: number }) => {
-    if (!currentRoom?.id) return;
+    if (!currentRoom?.id || !socket.id) return;
 
-    // Met à jour la position localement
+    // Mettre à jour la position localement immédiatement
     setPlayers((prevPlayers) => {
       const newPlayers = prevPlayers.map((player) =>
         player.id === socket.id ? { ...player, position } : player,
       );
+      console.log("Updated players locally:", newPlayers);
       return newPlayers;
     });
 
-    // Envoie la position aux autres joueurs
+    // Envoyer la position aux autres joueurs
     socketService.updatePlayerPosition(
       currentRoom.id,
       position,

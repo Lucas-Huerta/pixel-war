@@ -16,7 +16,7 @@ interface IProps {
 export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
   function PhaserGame({ currentActiveScene, selectedCharacter }, ref) {
     const game = useRef<Phaser.Game | null>(null!);
-    const { updatePlayerPosition, players } = useSocket();
+    const { updatePlayerPosition, players, currentRoom } = useSocket();
 
     useLayoutEffect(() => {
       if (game.current === null) {
@@ -82,6 +82,22 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(
         game.current.registry.set("players", players);
       }
     }, [players]);
+
+    useEffect(() => {
+      // Mettre à jour le registre quand les joueurs changent
+      if (game.current && players.length > 0) {
+        game.current.registry.set("players", players);
+        game.current.registry.set("roomId", currentRoom?.id);
+      }
+    }, [players, currentRoom]);
+
+    useEffect(() => {
+      // Mettre à jour le registre avec les informations nécessaires
+      if (game.current) {
+        game.current.registry.set("selectedCharacter", selectedCharacter);
+        game.current.registry.set("roomId", currentRoom?.id);
+      }
+    }, [selectedCharacter, currentRoom]);
 
     return <div id="game-container"></div>;
   },
