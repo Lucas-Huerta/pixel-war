@@ -1,11 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Button from "./Button";
-import { Room } from "../shared/types/room";
+import { useSocket } from "../contexts/SocketContext";
+import { socket } from "../shared/api/socket";
 
 interface WaitingRoomProps {
   team: number | null;
-  room: Room | null;
-  username: string | null;
   roomId: string | null;
   setScreen: (screen: string) => void;
   handleTeamSelect: (teamNumber: number) => void;
@@ -14,21 +13,25 @@ interface WaitingRoomProps {
 
 const WaitingRoom: React.FC<WaitingRoomProps> = ({
   team,
-  room,
-  username,
   roomId,
   setScreen,
   handleTeamSelect,
 }) => {
-  const getTeamPlayers = (teamId: number) => {
-    if (!room) return [];
-    if (room.players != null) {
-      return (
-        room.teams.find((team) => team.id === teamId.toString())?.players || []
-      );
+  const { roomUsers, startGame, isGameStarted } = useSocket();
+
+  useEffect(() => {
+    if (isGameStarted) {
+      setScreen("game");
     }
-    return [];
+  }, [isGameStarted, setScreen]);
+
+  const handleStartGame = () => {
+    if (roomId) {
+      startGame(roomId);
+    }
   };
+
+  console.log(roomUsers);
 
   return (
     <div className="flex-center">
@@ -45,11 +48,11 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
             Team 1
           </Button>
           <div className="team-players">
-            {getTeamPlayers(1).map((player) => (
+            {/* {getTeamPlayers(1).map((player) => (
               <div key={player.id} className="player-name">
                 {player.name} {player.name === username ? "(You)" : ""}
               </div>
-            ))}
+            ))} */}
           </div>
         </div>
 
@@ -62,27 +65,42 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({
             Team 2
           </Button>
           <div className="team-players">
-            {getTeamPlayers(2).map((player) => (
+            {/* {getTeamPlayers(2).map((player) => (
               <div key={player.id} className="player-name">
                 {player.name} {player.name === username ? "(You)" : ""}
               </div>
-            ))}
+            ))} */}
           </div>
         </div>
       </div>
 
       <div className="unassigned-players">
-        <h3>Waiting for team selection:</h3>
-        {room?.players.map((onePlayer, index) => (
-          <div key={index} className="player-name">
-            {onePlayer.id != null ? onePlayer.id : onePlayer.toString()}
-          </div>
-        ))}
+        <h3>Connected Players:</h3>
+        {/* {roomUsers != null &&
+          roomUsers.map((player, index) => (
+            <div key={index} className="player-name">
+              {player.name || player} {player.id === socket.id ? "(You)" : ""}
+            </div>
+          ))} */}
+        {roomUsers != null
+          ? roomUsers.map((player, index) => (
+              <div key={index} className="player-name">
+                {player.id || player} {player.id === socket.id ? "(You)" : ""}
+              </div>
+            ))
+          : null}
       </div>
 
-      <Button color="default" state="default" onClick={() => setScreen("game")}>
-        I'm ready!
+      <Button
+        color="default"
+        state={roomUsers.length >= 2 ? "default" : "disabled"}
+        onClick={handleStartGame}
+      >
+        Start game
       </Button>
+      {roomUsers.length < 2 && (
+        <p className="text-error">Need at least 2 players to start</p>
+      )}
     </div>
   );
 };

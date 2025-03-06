@@ -1,5 +1,5 @@
 import { socket } from "./socket";
-import { Grid, PixelUpdate } from "@/shared/types/pixel";
+import { Grid, PixelUpdate } from "../types/pixel";
 import { Room } from "../types/room";
 
 export const socketService = {
@@ -66,5 +66,42 @@ export const socketService = {
 
   onRoomPlayersUpdate(callback: (players: any[]) => void) {
     socket.on("room:playersUpdate", callback);
+  },
+
+  emitRoomUpdate(roomId: string, update: any) {
+    socket.emit("room:update", { roomId, update });
+  },
+
+  onCreate(callback: (room: Room) => void) {
+    socket.on("room:created", callback);
+  },
+
+  startGame(roomId: string) {
+    socket.emit("startGame", roomId);
+  },
+
+  onGameStarted(callback: (roomId: string) => void) {
+    socket.on("gameStarted", callback);
+  },
+
+  updatePlayerPosition(
+    roomId: string,
+    position: { x: number; y: number },
+    playerId: string,
+  ) {
+    socket.emit("player:move", { roomId, position, playerId });
+  },
+
+  onPlayerMove(
+    callback: (data: {
+      playerId: string;
+      position: { x: number; y: number };
+    }) => void,
+  ) {
+    socket.on("player:moved", callback);
+  },
+
+  onPlayersUpdate(callback: (players: any[]) => void) {
+    socket.on("players:update", callback);
   },
 };
