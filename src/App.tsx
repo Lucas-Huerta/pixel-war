@@ -6,6 +6,9 @@ import MenuWrapper from "./components/MenuWrapper";
 import Button from "./components/Button";
 import WaitingRoom from "./components/WaitingRoom"; // Import the new component
 import { roomService } from "./shared/api/roomService";
+import { socketService } from "./shared/api/socketService";
+import { socket } from "./shared/api/socket";
+import { Room } from "./shared/types/room";
 
 function App() {
   // The sprite can only be moved in the MainMenu Scene
@@ -20,6 +23,7 @@ function App() {
   const [team, setTeam] = useState<number | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [roomId, setRoomId] = useState<string | null>(null);
+  const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
 
   useEffect(() => {
     const handlePlayerMove = (x: number, y: number) => {
@@ -45,6 +49,56 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    // Emit getRooms event to request the rooms
+    socket.emit("getRooms");
+
+    socket.on("allRooms", (rooms) => {
+      console.log("Received rooms:", rooms);
+    });
+
+    // Cleanup listener when component unmounts
+    return () => {
+      socket.off("allRooms");
+    };
+  }, [team]);
+
+  useEffect(() => {
+    // Écoute l'arrivée de nouveaux joueurs
+    socketService.onPlayerJoined((newPlayer) => {
+      setCurrentRoom((prevRoom) => {
+        if (!prevRoom) return null;
+        return {
+          ...prevRoom,
+          players: [
+            ...prevRoom.players,
+            {
+              id: newPlayer.id,
+              name: newPlayer.name,
+              teamId: newPlayer.teamId,
+            },
+          ],
+        };
+      });
+    });
+
+    // Écoute les mises à jour de la liste des joueurs
+    socketService.onRoomPlayersUpdate((players) => {
+      setCurrentRoom((prevRoom) => {
+        if (!prevRoom) return null;
+        return {
+          ...prevRoom,
+          players: players,
+        };
+      });
+    });
+
+    return () => {
+      socket.off("player:joined");
+      socket.off("room:playersUpdate");
+    };
+  }, []);
+
   const changeScene = () => {
     if (phaserRef.current) {
       const scene = phaserRef.current.scene as MainMenu;
@@ -55,6 +109,31 @@ function App() {
     }
   };
 
+  const handleJoinCreatedRoom = (e: any) => {
+    socketService.joinRoom(e || "");
+
+    setRoomId(e || "");
+
+    // Séparer l'émission et l'écoute
+    socket.emit("getRoomUsers", e);
+
+    // Écouter la réponse
+    socket.on("roomUsers", (users) => {
+      setCurrentRoom({
+        id: e || "",
+        teams: [...(currentRoom?.teams || [])],
+        players: users.users.map((user: any) => ({
+          id: user,
+          name: user,
+          teamId: "",
+        })),
+        isGameStarted: currentRoom?.isGameStarted || false,
+      });
+    });
+
+    setScreen("waiting");
+  };
+
   // Event emitted from the PhaserGame component
   const currentScene = (scene: Phaser.Scene) => {
     console.log("Current Scene: ", canMoveSprite);
@@ -63,53 +142,76 @@ function App() {
   };
 
   const handleTeamSelect = (teamNumber: number) => {
-    roomService.createTeam(roomId as string, teamNumber.toString());
-    if (username) {
-      // Remove user from the previous team
-      if (team !== null) {
-        const previousTeamPlayersDiv = document.querySelector(
-          `.team-players-${team}`,
-        );
-        if (previousTeamPlayersDiv) {
-          const playerDivs = previousTeamPlayersDiv.querySelectorAll("div");
-          playerDivs.forEach((div) => {
-            if (div.textContent === username) {
-              previousTeamPlayersDiv.removeChild(div);
-            }
-          });
-        }
-      }
+    roomService.createTeam(roomId as string, teamNumber.toString()).then(() => {
+      socketService.joinRoom(roomId as string);
+    });
 
-      // Add user to the new team
-      const newTeamPlayersDiv = document.querySelector(
-        `.team-players-${teamNumber}`,
-      );
-      if (newTeamPlayersDiv) {
-        const playerDiv = document.createElement("div");
-        playerDiv.className = "player-name";
+    const team = teamNumber.toString();
 
-        // Add character image next to the name
-        const characterImg = document.createElement("img");
-        characterImg.src = `assets/character_${selectedCharacter + 1}.png`;
-        characterImg.style.width = "1.5rem";
-        characterImg.style.height = "1.5rem";
-
-        playerDiv.appendChild(characterImg);
-
-        const playerName = document.createTextNode(username);
-        playerDiv.appendChild(playerName);
-        newTeamPlayersDiv.appendChild(playerDiv);
-      }
-    }
+    setCurrentRoom({
+      id: currentRoom?.id || roomId || "",
+      teams: [
+        ...(currentRoom?.teams || []),
+        {
+          id: team,
+          name: `Team ${team}`,
+          players: [
+            ...(currentRoom?.players || [])
+              .filter((player) => player.name === username)
+              .map((player) => ({
+                ...player,
+                teamId: team.toString(),
+              })),
+          ],
+        },
+      ],
+      players: currentRoom?.players || [],
+      isGameStarted: currentRoom?.isGameStarted || false,
+    });
+    socket.emit("joinTeam", roomId, team);
     setTeam(teamNumber);
   };
 
-  const handleJoinGame = (e: any) => {
-    setRoomId(e);
-    roomService.addPlayer(e, {
-      name: username || "",
-    });
-    setScreen("waiting");
+  const handleJoinGame = async (roomId: string) => {
+    try {
+      if (!username) return;
+
+      setCurrentRoom({
+        id: roomId,
+        players: [],
+        teams: [],
+        isGameStarted: false,
+      });
+
+      // Ajouter le joueur via l'API
+      await roomService.addPlayer(roomId, {
+        name: username,
+        teamId: socket.id,
+      });
+
+      socketService.joinRoom(roomId);
+
+      setRoomId(roomId);
+
+      if (roomId) {
+        setCurrentRoom({
+          id: roomId,
+          players: [
+            ...(currentRoom?.players || []),
+            {
+              id: socket.id || "",
+              name: username,
+              teamId: undefined,
+            },
+          ],
+          teams: currentRoom?.teams || [],
+          isGameStarted: currentRoom?.isGameStarted || false,
+        });
+      }
+      setScreen("waiting");
+    } catch (error) {
+      console.error("Failed to join game:", error);
+    }
   };
 
   return (
@@ -128,11 +230,14 @@ function App() {
                   setRoomId={handleJoinGame}
                   roomId={roomId}
                   username={username}
+                  handleJoinCreatedRoom={handleJoinCreatedRoom}
                 />
               ) : (
                 <WaitingRoom
                   team={team}
                   roomId={roomId}
+                  room={currentRoom}
+                  username={username}
                   setScreen={setScreen}
                   handleTeamSelect={handleTeamSelect}
                   selectedCharacter={selectedCharacter}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Button from "./Button";
 import { roomService } from "../shared/api/roomService";
 
@@ -10,17 +10,19 @@ interface MenuWrapperProps {
   setRoomId: (roomId: string) => void;
   roomId: string | null;
   username: string | null;
+  handleJoinCreatedRoom: (roomToJoin: string) => void;
 }
 
 const MenuWrapper: React.FC<MenuWrapperProps> = ({
   selectedCharacter,
   setSelectedCharacter,
-  setScreen,
   setUsername,
   setRoomId,
-  roomId,
   username,
+  handleJoinCreatedRoom,
 }) => {
+  const [roomToJoin, setRoomToJoin] = useState<string | null>(null);
+
   return (
     <div className="flex-center">
       <h3 className="mb-1">Select your character</h3>
@@ -50,12 +52,14 @@ const MenuWrapper: React.FC<MenuWrapperProps> = ({
         className="input"
         type="text"
         placeholder="Room id"
-        onChange={(e) => setRoomId(e.target.value)}
+        onChange={(e) => setRoomToJoin(e.target.value)}
       />
       <Button
         className="mb-2"
-        state={username && roomId ? "default" : "disabled"}
-        onClick={() => (username && roomId ? setScreen("waiting") : null)}
+        state={username && roomToJoin ? "default" : "disabled"}
+        onClick={() =>
+          username && roomToJoin ? handleJoinCreatedRoom(roomToJoin) : null
+        }
       >
         Join the game
       </Button>

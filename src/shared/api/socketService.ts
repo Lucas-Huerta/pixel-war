@@ -37,7 +37,15 @@ export const socketService = {
   },
 
   onGameStart(callback: () => void) {
-    socket.on("game:start", callback);
+    socket.on("startGame", callback);
+  },
+
+  onHandleGetRooms(callback: (rooms: Room[]) => void) {
+    socket.emit("getRooms", callback);
+  },
+
+  handleReceiveAllRooms(callback: (rooms: Room[]) => void) {
+    socket.on("allRooms", callback);
   },
 
   onPlayerJoin(callback: (roomId: string) => void) {
@@ -45,10 +53,18 @@ export const socketService = {
   },
 
   joinRoom(roomId: string) {
-    socket.emit("room:join", roomId);
+    socket.emit("joinRoom", roomId);
   },
 
   leaveRoom(roomId: string) {
     socket.emit("room:leave", roomId);
+  },
+
+  onPlayerJoined(callback: (newPlayer: any) => void) {
+    socket.on("player:joined", callback);
+  },
+
+  onRoomPlayersUpdate(callback: (players: any[]) => void) {
+    socket.on("room:playersUpdate", callback);
   },
 };
